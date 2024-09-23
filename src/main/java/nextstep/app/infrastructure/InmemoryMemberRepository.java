@@ -4,7 +4,10 @@ import nextstep.app.domain.Member;
 import nextstep.app.domain.MemberRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
@@ -26,5 +29,10 @@ public class InmemoryMemberRepository implements MemberRepository {
     @Override
     public List<Member> findAll() {
         return members.values().stream().collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public void save(Member member) {
+        members.put(member.getEmail(), member);
     }
 }

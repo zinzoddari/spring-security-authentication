@@ -2,15 +2,17 @@ package nextstep.app;
 
 import nextstep.app.domain.Member;
 import nextstep.app.infrastructure.InmemoryMemberRepository;
-import nextstep.app.support.Authentication;
-import nextstep.app.support.SecurityContextHolder;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+
+import javax.servlet.http.HttpSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,43 +20,49 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class LoginTest {
+class LoginTest {
     private static final Member TEST_MEMBER = InmemoryMemberRepository.TEST_MEMBER_1;
 
     @Autowired
     private MockMvc mockMvc;
 
+    @DisplayName("로그인 성공")
     @Test
     void login_success() throws Exception {
-        ResultActions loginResponse = requestLoginWith(TEST_MEMBER.getEmail(), TEST_MEMBER.getPassword());
+        ResultActions loginResponse = mockMvc.perform(post("/login")
+                .param("username", TEST_MEMBER.getEmail())
+                .param("password", TEST_MEMBER.getPassword())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+        );
 
         loginResponse.andExpect(status().isOk());
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // todo: 테스트 통과하도록 만들기
-        assertThat(authentication.isAuthenticated()).isTrue();
+        HttpSession session = loginResponse.andReturn().getRequest().getSession();
+        assertThat(session).isNotNull();
+        assertThat(session.getAttribute("SPRING_SECURITY_CONTEXT")).isNotNull();
     }
 
+    @DisplayName("로그인 실패 - 사용자 없음")
     @Test
     void login_fail_with_no_user() throws Exception {
-        ResultActions response = requestLoginWith("none", "none");
-
-        response.andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void login_fail_with_invalid_password() throws Exception {
-        ResultActions response = requestLoginWith(TEST_MEMBER.getEmail(), "invalid");
-
-        response.andExpect(status().isUnauthorized());
-    }
-
-    private ResultActions requestLoginWith(String username, String password) throws Exception {
-        return mockMvc.perform(post("/login")
-                .param("username", username)
-                .param("password", password)
+        ResultActions response = mockMvc.perform(post("/login")
+                .param("username", "none")
+                .param("password", "none")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
         );
+
+        response.andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("로그인 실패 - 비밀번호 불일치")
+    @Test
+    void login_fail_with_invalid_password() throws Exception {
+        ResultActions response = mockMvc.perform(post("/login")
+                .param("username", TEST_MEMBER.getEmail())
+                .param("password", "invalid")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+        );
+
+        response.andExpect(status().isUnauthorized());
     }
 }
