@@ -2,7 +2,7 @@ package nextstep.app;
 
 import nextstep.app.domain.Member;
 import nextstep.app.domain.MemberRepository;
-import nextstep.app.infrastructure.InmemoryMemberRepository;
+import nextstep.app.util.Base64Convertor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.util.Base64Utils;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,11 +21,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class MemberTest {
-    private static final Member TEST_MEMBER = InmemoryMemberRepository.TEST_MEMBER_1;
+class BasicAuthTest {
+    private final Member TEST_MEMBER = new Member("a@a.com", "password", "a", "");
 
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private MemberRepository memberRepository;
 
@@ -39,7 +39,7 @@ class MemberTest {
     @Test
     void members() throws Exception {
         String token = TEST_MEMBER.getEmail() + ":" + TEST_MEMBER.getPassword();
-        String encoded = Base64Utils.encodeToString(token.getBytes());
+        String encoded = Base64Convertor.encode(token);
 
         ResultActions loginResponse = mockMvc.perform(get("/members")
                 .header("Authorization", "Basic " + encoded)
@@ -54,10 +54,11 @@ class MemberTest {
     @DisplayName("Basic Auth 인증 실패 시 에러 응답")
     @Test
     void members_fail() throws Exception {
-        ResultActions loginResponse = mockMvc.perform(get("/members")
-                .header("Authorization", "Basic " + "invalid")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-        );
+        ResultActions loginResponse = mockMvc.
+                perform(get("/members")
+                        .header("Authorization", "Basic " + "invalid")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                );
 
         loginResponse.andDo(print());
         loginResponse.andExpect(status().isUnauthorized());

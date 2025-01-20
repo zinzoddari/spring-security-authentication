@@ -1,7 +1,9 @@
 package nextstep.app;
 
+import jakarta.servlet.http.HttpSession;
 import nextstep.app.domain.Member;
-import nextstep.app.infrastructure.InmemoryMemberRepository;
+import nextstep.app.domain.MemberRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,10 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-
-import javax.servlet.http.HttpSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,11 +19,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class LoginTest {
-    private static final Member TEST_MEMBER = InmemoryMemberRepository.TEST_MEMBER_1;
+class FormLoginTest {
+    private final Member TEST_MEMBER = new Member("a@a.com", "password", "a", "");
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @BeforeEach
+    void setUp() {
+        memberRepository.save(TEST_MEMBER);
+    }
 
     @DisplayName("로그인 성공")
     @Test
