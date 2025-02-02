@@ -4,11 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import nextstep.app.domain.Member;
 import nextstep.app.domain.MemberRepository;
+import nextstep.security.domain.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 public class LoginController {
@@ -22,12 +21,10 @@ public class LoginController {
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(HttpServletRequest request, HttpSession session) {
-        Map<String, String[]> parameterMap = request.getParameterMap();
-        String username = parameterMap.get("username")[0];
-        String password = parameterMap.get("password")[0];
+        final Authentication userDetails = (Authentication) request.getAttribute("Authentication");
 
-        Member member = memberRepository.findByEmail(username)
-                .filter(it -> it.matchPassword(password))
+        Member member = memberRepository.findByEmail(userDetails.getUsername())
+                .filter(it -> it.matchPassword(userDetails.getPassword()))
                 .orElseThrow(AuthenticationException::new);
 
         session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, member);
