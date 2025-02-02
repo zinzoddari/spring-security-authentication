@@ -5,6 +5,7 @@ import nextstep.app.domain.Member;
 import nextstep.app.domain.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -71,5 +72,34 @@ class FormLoginTest {
         );
 
         response.andExpect(status().isUnauthorized());
+    }
+
+    @Nested
+    @DisplayName("로그인 실패 - 입력 값 누락")
+    class invalidInputValue {
+
+        @Test
+        @DisplayName("아이디가 없어 로그인 실패")
+        void idIsNull() throws Exception {
+            //when
+            ResultActions response = mockMvc.perform(post("/login")
+                    .param("password", "invalid")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            );
+
+            //then
+            response.andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("비밀번호가 없어 로그인 실패")
+        void passwordIsNull() throws Exception {
+            ResultActions response = mockMvc.perform(post("/login")
+                    .param("username", TEST_MEMBER.getEmail())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            );
+
+            response.andExpect(status().isUnauthorized());
+        }
     }
 }
