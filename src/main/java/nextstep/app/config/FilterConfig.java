@@ -1,30 +1,28 @@
 package nextstep.app.config;
 
-import jakarta.servlet.Filter;
 import nextstep.security.BasicAuthenticationFilter;
+import nextstep.security.DefaultSecurityFilterChain;
+import nextstep.security.FilterChainProxy;
 import nextstep.security.LoginFormAuthenticationFilter;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import nextstep.security.SecurityFilterChain;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.DelegatingFilterProxy;
+
+import java.util.List;
 
 @Configuration
 class FilterConfig {
 
     @Bean
-    public FilterRegistrationBean<Filter> basicAuthenticationFilter() {
-        FilterRegistrationBean registrationBean = new FilterRegistrationBean<>(new BasicAuthenticationFilter());
+    public DelegatingFilterProxy delegatingFilterProxy() {
+        SecurityFilterChain securityFilterChain = new DefaultSecurityFilterChain(
+                List.of(new BasicAuthenticationFilter()
+                , new LoginFormAuthenticationFilter())
+        );
 
-        registrationBean.addUrlPatterns("/members");
+        List<SecurityFilterChain> filterChains = List.of(securityFilterChain);
 
-        return registrationBean;
-    }
-
-    @Bean
-    public FilterRegistrationBean<Filter> loginFormAuthenticationFilter() {
-        FilterRegistrationBean registrationBean = new FilterRegistrationBean<>(new LoginFormAuthenticationFilter());
-
-        registrationBean.addUrlPatterns("/login");
-
-        return registrationBean;
+        return new DelegatingFilterProxy(new FilterChainProxy(filterChains));
     }
 }
