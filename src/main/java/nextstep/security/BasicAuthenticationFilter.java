@@ -10,6 +10,7 @@ import nextstep.app.util.Base64Convertor;
 import nextstep.security.domain.Authentication;
 
 import java.io.IOException;
+import nextstep.security.domain.UsernamePasswordAuthenticationToken;
 
 public class BasicAuthenticationFilter implements Filter {
 
@@ -25,7 +26,7 @@ public class BasicAuthenticationFilter implements Filter {
         String decodedString = Base64Convertor.decode(credentials);
         String[] usernameAndPassword = decodedString.split(":");
 
-        request.setAttribute("Authentication", new Authentication(usernameAndPassword[0], usernameAndPassword[1]));
+        request.setAttribute("Authentication", new UsernamePasswordAuthenticationToken(usernameAndPassword[0], usernameAndPassword[1]));
     }
 
     private boolean isBasicAuthentication(final String authorization) {

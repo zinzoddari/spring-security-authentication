@@ -6,7 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import nextstep.security.domain.Authentication;
+import nextstep.security.domain.UsernamePasswordAuthenticationToken;
 
 import java.io.IOException;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class LoginFormAuthenticationFilter implements Filter {
         final String username = parameterMap.get("username")[0];
         final String password = parameterMap.get("password")[0];
 
-        request.setAttribute("Authentication", new Authentication(username, password));
+        request.setAttribute("Authentication", new UsernamePasswordAuthenticationToken(username, password));
     }
 
     private boolean isDefaultAuthentication(final String authorization) {
