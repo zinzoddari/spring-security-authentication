@@ -6,7 +6,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import nextstep.app.util.Base64Convertor;
 import nextstep.security.domain.Authentication;
 
@@ -18,17 +17,18 @@ public class BasicAuthenticationFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         final String authorization = ((HttpServletRequest) request).getHeader("Authorization");
 
+        if (!isBasicAuthentication(authorization)) {
+            return;
+        }
+
         String credentials = authorization.split(" ")[1];
         String decodedString = Base64Convertor.decode(credentials);
         String[] usernameAndPassword = decodedString.split(":");
 
-        try {
-            request.setAttribute("Authentication", new Authentication(usernameAndPassword[0], usernameAndPassword[1]));
-        } catch (RuntimeException e) {
-            ((HttpServletResponse) response).setStatus(401);
-            return;
-        }
+        request.setAttribute("Authentication", new Authentication(usernameAndPassword[0], usernameAndPassword[1]));
+    }
 
-        chain.doFilter(request, response);
+    private boolean isBasicAuthentication(final String authorization) {
+        return authorization != null && authorization.startsWith("Basic ");
     }
 }

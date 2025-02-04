@@ -16,13 +16,14 @@ class FilterConfig {
 
     @Bean
     public DelegatingFilterProxy delegatingFilterProxy() {
-        SecurityFilterChain securityFilterChain = new DefaultSecurityFilterChain(
+        return new DelegatingFilterProxy(new FilterChainProxy(List.of(securityFilterChain())));
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain() {
+        return new DefaultSecurityFilterChain(
                 List.of(new BasicAuthenticationFilter()
-                , new LoginFormAuthenticationFilter())
+                        , new LoginFormAuthenticationFilter())
         );
-
-        List<SecurityFilterChain> filterChains = List.of(securityFilterChain);
-
-        return new DelegatingFilterProxy(new FilterChainProxy(filterChains));
     }
 }
