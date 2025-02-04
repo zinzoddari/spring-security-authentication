@@ -21,6 +21,10 @@ public class DaoAuthenticationProvider implements AuthenticationProvider {
             return authentication;
         }
 
+        if (!userDetails.getPassword().equals(authentication.getCredentials())) {
+            return authentication;
+        }
+
         return new UsernamePasswordAuthenticationToken(authentication);
     }
 
