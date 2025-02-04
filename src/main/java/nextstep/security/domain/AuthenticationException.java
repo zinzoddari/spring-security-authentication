@@ -1,4 +1,4 @@
-package nextstep.app.ui;
+package nextstep.security.domain;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

@@ -4,12 +4,17 @@ public class UsernamePasswordAuthenticationToken implements Authentication {
 
     private final Object principal;
     private final Object credentials;
-    private final boolean isAuthenticated;
+    private boolean isAuthenticated = false;
 
     public UsernamePasswordAuthenticationToken(Object principal, Object credentials) {
         this.principal = principal;
         this.credentials = credentials;
-        this.isAuthenticated = false;
+    }
+
+    public UsernamePasswordAuthenticationToken(Authentication authentication) {
+        this.principal = authentication.getPrincipal();
+        this.credentials = authentication.getCredentials();
+        this.isAuthenticated = true;
     }
 
     @Override
