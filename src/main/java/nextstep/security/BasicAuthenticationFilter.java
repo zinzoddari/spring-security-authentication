@@ -14,6 +14,12 @@ import nextstep.security.domain.UsernamePasswordAuthenticationToken;
 
 public class BasicAuthenticationFilter implements Filter {
 
+    private final UserDetailsService userDetailsService;
+
+    public BasicAuthenticationFilter(UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         final String authorization = ((HttpServletRequest) request).getHeader("Authorization");
@@ -26,7 +32,14 @@ public class BasicAuthenticationFilter implements Filter {
         String decodedString = Base64Convertor.decode(credentials);
         String[] usernameAndPassword = decodedString.split(":");
 
-        request.setAttribute("Authentication", new UsernamePasswordAuthenticationToken(usernameAndPassword[0], usernameAndPassword[1]));
+        AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usernameAndPassword[0], usernameAndPassword[1]));
+
+        if (!authentication.isAuthenticated()) {
+            return;
+        }
+
+        request.setAttribute("Authentication", authentication);
     }
 
     private boolean isBasicAuthentication(final String authorization) {
