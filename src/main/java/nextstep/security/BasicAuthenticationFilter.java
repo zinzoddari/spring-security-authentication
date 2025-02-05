@@ -7,9 +7,12 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import nextstep.app.util.Base64Convertor;
+import nextstep.security.context.SecurityContext;
+import nextstep.security.context.SecurityContextHolder;
 import nextstep.security.domain.Authentication;
 
 import java.io.IOException;
+import nextstep.security.domain.AuthenticationException;
 import nextstep.security.domain.UsernamePasswordAuthenticationToken;
 
 public class BasicAuthenticationFilter implements Filter {
@@ -36,10 +39,11 @@ public class BasicAuthenticationFilter implements Filter {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usernameAndPassword[0], usernameAndPassword[1]));
 
         if (!authentication.isAuthenticated()) {
-            return;
+            throw new AuthenticationException();
         }
 
-        request.setAttribute("Authentication", authentication);
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        securityContext.setAuthentication(authentication);
     }
 
     private boolean isBasicAuthentication(final String authorization) {
