@@ -1,8 +1,14 @@
 package nextstep.app;
 
-import jakarta.servlet.http.HttpSession;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import nextstep.app.domain.Member;
 import nextstep.app.domain.MemberRepository;
+import nextstep.security.context.SecurityContext;
+import nextstep.security.context.SecurityContextHolder;
+import nextstep.security.domain.Authentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,10 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -45,9 +47,15 @@ class FormLoginTest {
 
         loginResponse.andExpect(status().isOk());
 
-        HttpSession session = loginResponse.andReturn().getRequest().getSession();
-        assertThat(session).isNotNull();
-        assertThat(session.getAttribute("SPRING_SECURITY_CONTEXT")).isNotNull();
+        SecurityContext holder = SecurityContextHolder.getContext();
+        Authentication authentication = holder.getAuthentication();
+
+        assertSoftly(it -> {
+            it.assertThat(authentication).isNotNull();
+            it.assertThat((String) authentication.getPrincipal()).isEqualTo(TEST_MEMBER.getEmail());
+            it.assertThat((String) authentication.getCredentials()).isEqualTo(TEST_MEMBER.getPassword());
+        });
+
     }
 
     @DisplayName("로그인 실패 - 사용자 없음")

@@ -7,10 +7,14 @@ public class SecurityContextHolder {
     public static SecurityContext getContext() {
         SecurityContext context = contextHolder.get();
         if (context == null) {
-            context = new SecurityContextImpl();
+            context = createEmptyContext();
             contextHolder.set(context);
         }
         return context;
+    }
+
+    public static SecurityContext createEmptyContext() {
+        return new SecurityContextImpl();
     }
 
     public static void setContext(SecurityContext context) {

@@ -8,7 +8,7 @@ public class SecurityContextImpl implements SecurityContext {
 
     @Override
     public Authentication getAuthentication() {
-        return null;
+        return authentication;
     }
 
     @Override
