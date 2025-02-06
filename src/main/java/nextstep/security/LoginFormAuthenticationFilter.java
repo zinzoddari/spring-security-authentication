@@ -25,9 +25,15 @@ public class LoginFormAuthenticationFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         final String authorization = ((HttpServletRequest) request).getHeader("Authorization");
 
         if (!isDefaultAuthentication(authorization)) {
+            chain.doFilter(request, response);
             return;
         }
 
@@ -46,6 +52,8 @@ public class LoginFormAuthenticationFilter implements Filter {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
+
+        chain.doFilter(request, response);
     }
 
     private boolean isDefaultAuthentication(final String authorization) {

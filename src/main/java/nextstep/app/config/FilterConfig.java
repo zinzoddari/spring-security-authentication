@@ -1,16 +1,17 @@
 package nextstep.app.config;
 
+import java.util.List;
 import nextstep.app.MemberService;
 import nextstep.security.BasicAuthenticationFilter;
 import nextstep.security.DefaultSecurityFilterChain;
 import nextstep.security.FilterChainProxy;
 import nextstep.security.LoginFormAuthenticationFilter;
 import nextstep.security.SecurityFilterChain;
+import nextstep.security.context.HttpSessionSecurityContextRepository;
+import nextstep.security.context.SecurityContextHolderFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.DelegatingFilterProxy;
-
-import java.util.List;
 
 @Configuration
 class FilterConfig {
@@ -29,8 +30,11 @@ class FilterConfig {
     @Bean
     public SecurityFilterChain securityFilterChain() {
         return new DefaultSecurityFilterChain(
-                List.of(new BasicAuthenticationFilter(memberService)
-                        , new LoginFormAuthenticationFilter(memberService))
+            List.of(
+                new SecurityContextHolderFilter(new HttpSessionSecurityContextRepository())
+                , new BasicAuthenticationFilter(memberService)
+                , new LoginFormAuthenticationFilter(memberService)
+            )
         );
     }
 }

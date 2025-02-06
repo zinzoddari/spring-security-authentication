@@ -25,9 +25,15 @@ public class BasicAuthenticationFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         final String authorization = ((HttpServletRequest) request).getHeader("Authorization");
 
         if (!isBasicAuthentication(authorization)) {
+            chain.doFilter(request, response);
             return;
         }
 
@@ -44,6 +50,8 @@ public class BasicAuthenticationFilter implements Filter {
 
         SecurityContext securityContext = SecurityContextHolder.getContext();
         securityContext.setAuthentication(authentication);
+
+        chain.doFilter(request, response);
     }
 
     private boolean isBasicAuthentication(final String authorization) {

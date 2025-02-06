@@ -22,17 +22,35 @@ public class FilterChainProxy implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         SecurityFilterChain filterChain = filterChains.get(0);
-        
-        for (Filter filter : filterChain.getFilter()) {
+
+        VirtualFilterChain virtualFilterChain = new VirtualFilterChain(filterChain.getFilter(), chain);
+        virtualFilterChain.doFilter(request, response);
+    }
+
+    private class VirtualFilterChain implements FilterChain {
+        private final List<Filter> filters;
+        private final FilterChain originalChain;
+        private int currentPosition = 0;
+
+        public VirtualFilterChain(List<Filter> filters, FilterChain originalChain) {
+            this.filters = filters;
+            this.originalChain = originalChain;
+        }
+
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
+            if (currentPosition == filters.size()) {
+                originalChain.doFilter(request, response);
+                return;
+            }
+
             try {
-                filter.doFilter(request, response, chain);
+                Filter nextFilter = filters.get(currentPosition++);
+                nextFilter.doFilter(request, response, this);
             } catch (RuntimeException e) {
                 SecurityContextHolder.clearContext();
                 ((HttpServletResponse) response).setStatus(401);
-                return;
             }
         }
-
-        chain.doFilter(request, response);
     }
 }
