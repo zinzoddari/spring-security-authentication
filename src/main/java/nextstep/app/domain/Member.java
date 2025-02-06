@@ -3,10 +3,13 @@ package nextstep.app.domain;
 import nextstep.security.domain.UserDetails;
 
 public class Member implements UserDetails {
-    private final String email;
-    private final String password;
-    private final String name;
-    private final String imageUrl;
+    private String email;
+    private String password;
+    private String name;
+    private String imageUrl;
+
+    private Member() {
+    }
 
     public Member(String email, String password, String name, String imageUrl) {
         this.email = email;
