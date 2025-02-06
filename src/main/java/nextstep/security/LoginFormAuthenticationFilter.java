@@ -17,6 +17,8 @@ import java.util.Map;
 
 public class LoginFormAuthenticationFilter implements Filter {
 
+    public static final String AUTHORIZATION = "Authorization";
+
     private final UserDetailsService userDetailsService;
 
     public LoginFormAuthenticationFilter(UserDetailsService userDetailsService) {
@@ -25,38 +27,65 @@ public class LoginFormAuthenticationFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+        if (isAuthenticated()) {
             chain.doFilter(request, response);
             return;
         }
 
-        final String authorization = ((HttpServletRequest) request).getHeader("Authorization");
+        final String authorization = ((HttpServletRequest) request).getHeader(AUTHORIZATION);
 
         if (!isDefaultAuthentication(authorization)) {
             chain.doFilter(request, response);
             return;
         }
 
-        Map<String, String[]> parameterMap = request.getParameterMap();
+        final Map<String, String[]> parameterMap = request.getParameterMap();
+        final Authentication authentication = authenticateUser(parameterMap);
 
+        saveAuthentication(authentication);
+
+        chain.doFilter(request, response);
+    }
+
+    /**
+     * SecurityContext에 정보가 유효한지 확인합니다.
+     */
+    private boolean isAuthenticated() {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        return authentication != null && authentication.isAuthenticated();
+    }
+
+    /**
+     * 기본, Login Form 형식의 인증 정보인지 확인합니다.
+     */
+    private boolean isDefaultAuthentication(final String authorization) {
+        return authorization == null;
+    }
+
+    /**
+     * 인증이 유효한 Authentication 객체를 반환합니다.
+     */
+    private Authentication authenticateUser(final Map<String, String[]> parameterMap) {
         final String username = parameterMap.get("username")[0];
         final String password = parameterMap.get("password")[0];
 
-        AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        final AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
+        final Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
 
         if (!authentication.isAuthenticated()) {
             throw new AuthenticationException();
         }
 
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
-        chain.doFilter(request, response);
+        return authentication;
     }
 
-    private boolean isDefaultAuthentication(final String authorization) {
-        return authorization == null;
+    /**
+     * 인증 된 authorization 객체를, context에 저장합니다.
+     */
+    private void saveAuthentication(final Authentication authentication) {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 }
