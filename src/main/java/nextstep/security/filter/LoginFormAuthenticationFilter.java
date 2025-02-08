@@ -18,8 +18,6 @@ import java.io.IOException;
 
 public class LoginFormAuthenticationFilter implements Filter {
 
-    public static final String AUTHORIZATION = "Authorization";
-
     private final AuthenticationManager authenticationManager;
     private final AuthenticationConverter authenticationConverter;
 
@@ -31,13 +29,6 @@ public class LoginFormAuthenticationFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (isAuthenticated()) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        final String authorization = ((HttpServletRequest) request).getHeader(AUTHORIZATION);
-
-        if (!isDefaultAuthentication(authorization)) {
             chain.doFilter(request, response);
             return;
         }
