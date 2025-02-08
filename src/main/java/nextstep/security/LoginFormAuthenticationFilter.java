@@ -19,10 +19,10 @@ public class LoginFormAuthenticationFilter implements Filter {
 
     public static final String AUTHORIZATION = "Authorization";
 
-    private final UserDetailsService userDetailsService;
+    private final AuthenticationManager authenticationManager;
 
-    public LoginFormAuthenticationFilter(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public LoginFormAuthenticationFilter(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
     }
 
     @Override
@@ -90,8 +90,6 @@ public class LoginFormAuthenticationFilter implements Filter {
         } catch (RuntimeException e) {
             throw new IllegalArgumentException(e);
         }
-
-        final AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
 
         return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }

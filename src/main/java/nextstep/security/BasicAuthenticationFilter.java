@@ -21,10 +21,10 @@ public class BasicAuthenticationFilter implements Filter {
     public static final String AUTHORIZATION = "Authorization";
     private static final String BASIC_AUTH_PREFIX = "Basic ";
 
-    private final UserDetailsService userDetailsService;
+    private final AuthenticationManager authenticationManager;
 
-    public BasicAuthenticationFilter(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public BasicAuthenticationFilter(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
     }
 
     @Override
@@ -83,8 +83,6 @@ public class BasicAuthenticationFilter implements Filter {
         final String[] usernameAndPassword = getUsernameAndPassword(authorization);
         final String username = usernameAndPassword[0];
         final String password = usernameAndPassword[1];
-
-        final AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
 
         return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }

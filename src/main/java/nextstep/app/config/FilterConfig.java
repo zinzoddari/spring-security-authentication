@@ -2,10 +2,13 @@ package nextstep.app.config;
 
 import java.util.List;
 import nextstep.app.MemberService;
+import nextstep.security.AuthenticationManager;
 import nextstep.security.BasicAuthenticationFilter;
+import nextstep.security.DaoAuthenticationProvider;
 import nextstep.security.DefaultSecurityFilterChain;
 import nextstep.security.FilterChainProxy;
 import nextstep.security.LoginFormAuthenticationFilter;
+import nextstep.security.ProviderManager;
 import nextstep.security.SecurityFilterChain;
 import nextstep.security.context.HttpSessionSecurityContextRepository;
 import nextstep.security.context.SecurityContextHolderFilter;
@@ -32,9 +35,14 @@ class FilterConfig {
         return new DefaultSecurityFilterChain(
             List.of(
                 new SecurityContextHolderFilter(new HttpSessionSecurityContextRepository())
-                , new BasicAuthenticationFilter(memberService)
-                , new LoginFormAuthenticationFilter(memberService)
+                , new BasicAuthenticationFilter(authenticationManager())
+                , new LoginFormAuthenticationFilter(authenticationManager())
             )
         );
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        return new ProviderManager(new DaoAuthenticationProvider(memberService));
     }
 }
