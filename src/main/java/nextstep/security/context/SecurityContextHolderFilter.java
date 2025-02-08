@@ -21,18 +21,20 @@ public class SecurityContextHolderFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
         throws IOException, ServletException {
 
-        SecurityContext securityContext = securityContextRepository.loadContext((HttpServletRequest) servletRequest);
+        try {
+            SecurityContext securityContext = securityContextRepository.loadContext((HttpServletRequest) servletRequest);
 
-        if (securityContext != null) {
-            SecurityContextHolder.setContext(securityContext);
+            if (securityContext != null) {
+                SecurityContextHolder.setContext(securityContext);
+            }
+
+            filterChain.doFilter(servletRequest, servletResponse);
+
+            SecurityContext afterSecurityContext = SecurityContextHolder.getContext();
+            securityContextRepository.saveContext(afterSecurityContext, (HttpServletRequest) servletRequest,
+                (HttpServletResponse) servletResponse);
+        } finally {
+            SecurityContextHolder.clearContext();
         }
-
-        filterChain.doFilter(servletRequest, servletResponse);
-
-        SecurityContext afterSecurityContext = SecurityContextHolder.getContext();
-        securityContextRepository.saveContext(afterSecurityContext, (HttpServletRequest) servletRequest,
-            (HttpServletResponse) servletResponse);
-
-        SecurityContextHolder.clearContext();
     }
 }
