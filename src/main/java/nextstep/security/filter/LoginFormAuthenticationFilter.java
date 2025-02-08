@@ -7,23 +7,25 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import nextstep.security.authentication.AuthenticationException;
 import nextstep.security.authentication.AuthenticationManager;
 import nextstep.security.context.SecurityContext;
 import nextstep.security.context.SecurityContextHolder;
 import nextstep.security.authentication.Authentication;
-import nextstep.security.authentication.UsernamePasswordAuthenticationToken;
+import nextstep.security.filter.converter.AuthenticationConverter;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class LoginFormAuthenticationFilter implements Filter {
 
     public static final String AUTHORIZATION = "Authorization";
 
     private final AuthenticationManager authenticationManager;
+    private final AuthenticationConverter authenticationConverter;
 
-    public LoginFormAuthenticationFilter(AuthenticationManager authenticationManager) {
+    public LoginFormAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationConverter authenticationConverter) {
         this.authenticationManager = authenticationManager;
+        this.authenticationConverter = authenticationConverter;
     }
 
     @Override
@@ -40,24 +42,21 @@ public class LoginFormAuthenticationFilter implements Filter {
             return;
         }
 
-        final Map<String, String[]> parameterMap = request.getParameterMap();
-        Authentication authentication = null;
-
         try {
-            authentication = authenticateUser(parameterMap);
+            final Authentication authentication = authenticationConverter.convert((HttpServletRequest) request);
+
+            final Authentication authenticatedAuthentication = authenticationManager.authenticate(authentication);
+
+            if (!authenticatedAuthentication.isAuthenticated()) {
+                throw new AuthenticationException();
+            }
+
+            saveAuthentication(authenticatedAuthentication);
         } catch (RuntimeException e) {
             SecurityContextHolder.clearContext();
             ((HttpServletResponse) response).setStatus(401);
             return;
         }
-
-        if (!authentication.isAuthenticated()) {
-            SecurityContextHolder.clearContext();
-            ((HttpServletResponse) response).setStatus(401);
-            return;
-        }
-
-        saveAuthentication(authentication);
 
         chain.doFilter(request, response);
     }
@@ -76,23 +75,6 @@ public class LoginFormAuthenticationFilter implements Filter {
      */
     private boolean isDefaultAuthentication(final String authorization) {
         return authorization == null;
-    }
-
-    /**
-     * 인증이 유효한 Authentication 객체를 반환합니다.
-     */
-    private Authentication authenticateUser(final Map<String, String[]> parameterMap) {
-        String username;
-        String password;
-
-        try {
-            username = parameterMap.get("username")[0];
-            password = parameterMap.get("password")[0];
-        } catch (RuntimeException e) {
-            throw new IllegalArgumentException(e);
-        }
-
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
     /**

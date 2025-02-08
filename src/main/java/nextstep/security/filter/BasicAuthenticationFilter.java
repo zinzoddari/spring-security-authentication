@@ -7,7 +7,6 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import nextstep.app.util.Base64Convertor;
 import nextstep.security.authentication.AuthenticationManager;
 import nextstep.security.context.SecurityContext;
 import nextstep.security.context.SecurityContextHolder;
@@ -15,7 +14,7 @@ import nextstep.security.authentication.Authentication;
 
 import java.io.IOException;
 import nextstep.security.authentication.AuthenticationException;
-import nextstep.security.authentication.UsernamePasswordAuthenticationToken;
+import nextstep.security.filter.converter.AuthenticationConverter;
 
 public class BasicAuthenticationFilter implements Filter {
 
@@ -23,9 +22,11 @@ public class BasicAuthenticationFilter implements Filter {
     private static final String BASIC_AUTH_PREFIX = "Basic ";
 
     private final AuthenticationManager authenticationManager;
+    private final AuthenticationConverter authenticationConverter;
 
-    public BasicAuthenticationFilter(AuthenticationManager authenticationManager) {
+    public BasicAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationConverter authenticationConverter) {
         this.authenticationManager = authenticationManager;
+        this.authenticationConverter = authenticationConverter;
     }
 
     @Override
@@ -42,21 +43,21 @@ public class BasicAuthenticationFilter implements Filter {
             return;
         }
 
-        Authentication authentication;
-
         try {
-            authentication = authenticateUser(authorization);
+            final Authentication authentication = authenticationConverter.convert((HttpServletRequest) request);
 
-            if (!authentication.isAuthenticated()) {
+            final Authentication authenticatedAuthentication = authenticationManager.authenticate(authentication);
+
+            if (!authenticatedAuthentication.isAuthenticated()) {
                throw new AuthenticationException();
             }
+
+            saveAuthentication(authenticatedAuthentication);
         } catch (IllegalArgumentException | AuthenticationException e) {
             SecurityContextHolder.clearContext();
             ((HttpServletResponse) response).setStatus(401);
             return;
         }
-
-        saveAuthentication(authentication);
 
         chain.doFilter(request, response);
     }
@@ -75,33 +76,6 @@ public class BasicAuthenticationFilter implements Filter {
      */
     private boolean isBasicAuthentication(final String authorization) {
         return authorization != null && authorization.startsWith(BASIC_AUTH_PREFIX);
-    }
-
-    /**
-     * 인증이 유효한 Authentication 객체를 반환합니다.
-     */
-    private Authentication authenticateUser(final String authorization) throws IllegalArgumentException {
-        final String[] usernameAndPassword = getUsernameAndPassword(authorization);
-        final String username = usernameAndPassword[0];
-        final String password = usernameAndPassword[1];
-
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-    }
-
-    /**
-     * authorization 정보 기반으로, username과 password를 반환합니다.
-     */
-    private String[] getUsernameAndPassword(final String authorization) {
-        final String credentials = authorization.split(" ")[1];
-        final String decodedString = Base64Convertor.decode(credentials);
-
-        final String[] usernameAndPassword = decodedString.split(":");
-
-        if (usernameAndPassword.length != 2) {
-            throw new IllegalArgumentException();
-        }
-
-        return decodedString.split(":");
     }
 
     /**

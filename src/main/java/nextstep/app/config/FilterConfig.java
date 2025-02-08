@@ -12,6 +12,8 @@ import nextstep.security.authentication.ProviderManager;
 import nextstep.security.filter.SecurityFilterChain;
 import nextstep.security.context.HttpSessionSecurityContextRepository;
 import nextstep.security.context.SecurityContextHolderFilter;
+import nextstep.security.filter.converter.BasicAuthenticationConverter;
+import nextstep.security.filter.converter.LoginFormAuthenticationConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.DelegatingFilterProxy;
@@ -35,8 +37,8 @@ class FilterConfig {
         return new DefaultSecurityFilterChain(
             List.of(
                 new SecurityContextHolderFilter(new HttpSessionSecurityContextRepository())
-                , new BasicAuthenticationFilter(authenticationManager())
-                , new LoginFormAuthenticationFilter(authenticationManager())
+                , new BasicAuthenticationFilter(authenticationManager(), new BasicAuthenticationConverter())
+                , new LoginFormAuthenticationFilter(authenticationManager(), new LoginFormAuthenticationConverter())
             )
         );
     }
