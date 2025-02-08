@@ -1,4 +1,4 @@
-package nextstep.security.domain;
+package nextstep.security.authentication;
 
 public interface Authentication {
 

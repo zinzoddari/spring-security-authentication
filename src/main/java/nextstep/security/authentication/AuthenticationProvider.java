@@ -1,7 +1,4 @@
-package nextstep.security;
-
-import nextstep.security.domain.Authentication;
-import nextstep.security.domain.AuthenticationException;
+package nextstep.security.authentication;
 
 public interface AuthenticationProvider {
 

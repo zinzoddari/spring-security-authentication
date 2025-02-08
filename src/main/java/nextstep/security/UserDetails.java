@@ -1,4 +1,4 @@
-package nextstep.security.domain;
+package nextstep.security;
 
 public interface UserDetails {
 

@@ -1,6 +1,4 @@
-package nextstep.security;
-
-import nextstep.security.domain.Authentication;
+package nextstep.security.authentication;
 
 public interface AuthenticationManager {
 

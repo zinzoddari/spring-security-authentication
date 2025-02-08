@@ -1,9 +1,7 @@
-package nextstep.security;
+package nextstep.security.authentication;
 
-import nextstep.security.domain.Authentication;
-import nextstep.security.domain.AuthenticationException;
-import nextstep.security.domain.UserDetails;
-import nextstep.security.domain.UsernamePasswordAuthenticationToken;
+import nextstep.security.UserDetailsService;
+import nextstep.security.UserDetails;
 
 public class DaoAuthenticationProvider implements AuthenticationProvider {
 

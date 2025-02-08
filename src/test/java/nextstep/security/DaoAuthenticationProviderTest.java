@@ -1,8 +1,8 @@
 package nextstep.security;
 
-import nextstep.security.domain.Authentication;
-import nextstep.security.domain.UserDetails;
-import nextstep.security.domain.UsernamePasswordAuthenticationToken;
+import nextstep.security.authentication.Authentication;
+import nextstep.security.authentication.DaoAuthenticationProvider;
+import nextstep.security.authentication.UsernamePasswordAuthenticationToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -3,7 +3,7 @@ package nextstep.security.context;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import nextstep.security.domain.Authentication;
+import nextstep.security.authentication.Authentication;
 
 public class HttpSessionSecurityContextRepository implements SecurityContextRepository {
 

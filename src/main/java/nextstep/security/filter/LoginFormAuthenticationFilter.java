@@ -1,4 +1,4 @@
-package nextstep.security;
+package nextstep.security.filter;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -7,23 +7,22 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import nextstep.app.util.Base64Convertor;
+import nextstep.security.authentication.AuthenticationManager;
 import nextstep.security.context.SecurityContext;
 import nextstep.security.context.SecurityContextHolder;
-import nextstep.security.domain.Authentication;
+import nextstep.security.authentication.Authentication;
+import nextstep.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.io.IOException;
-import nextstep.security.domain.AuthenticationException;
-import nextstep.security.domain.UsernamePasswordAuthenticationToken;
+import java.util.Map;
 
-public class BasicAuthenticationFilter implements Filter {
+public class LoginFormAuthenticationFilter implements Filter {
 
     public static final String AUTHORIZATION = "Authorization";
-    private static final String BASIC_AUTH_PREFIX = "Basic ";
 
     private final AuthenticationManager authenticationManager;
 
-    public BasicAuthenticationFilter(AuthenticationManager authenticationManager) {
+    public LoginFormAuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
 
@@ -36,20 +35,23 @@ public class BasicAuthenticationFilter implements Filter {
 
         final String authorization = ((HttpServletRequest) request).getHeader(AUTHORIZATION);
 
-        if (!isBasicAuthentication(authorization)) {
+        if (!isDefaultAuthentication(authorization)) {
             chain.doFilter(request, response);
             return;
         }
 
-        Authentication authentication;
+        final Map<String, String[]> parameterMap = request.getParameterMap();
+        Authentication authentication = null;
 
         try {
-            authentication = authenticateUser(authorization);
+            authentication = authenticateUser(parameterMap);
+        } catch (RuntimeException e) {
+            SecurityContextHolder.clearContext();
+            ((HttpServletResponse) response).setStatus(401);
+            return;
+        }
 
-            if (!authentication.isAuthenticated()) {
-               throw new AuthenticationException();
-            }
-        } catch (IllegalArgumentException | AuthenticationException e) {
+        if (!authentication.isAuthenticated()) {
             SecurityContextHolder.clearContext();
             ((HttpServletResponse) response).setStatus(401);
             return;
@@ -70,37 +72,27 @@ public class BasicAuthenticationFilter implements Filter {
     }
 
     /**
-     * Basic 형식의 인증 정보인지 확인합니다.
+     * 기본, Login Form 형식의 인증 정보인지 확인합니다.
      */
-    private boolean isBasicAuthentication(final String authorization) {
-        return authorization != null && authorization.startsWith(BASIC_AUTH_PREFIX);
+    private boolean isDefaultAuthentication(final String authorization) {
+        return authorization == null;
     }
 
     /**
      * 인증이 유효한 Authentication 객체를 반환합니다.
      */
-    private Authentication authenticateUser(final String authorization) throws IllegalArgumentException {
-        final String[] usernameAndPassword = getUsernameAndPassword(authorization);
-        final String username = usernameAndPassword[0];
-        final String password = usernameAndPassword[1];
+    private Authentication authenticateUser(final Map<String, String[]> parameterMap) {
+        String username;
+        String password;
 
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-    }
-
-    /**
-     * authorization 정보 기반으로, username과 password를 반환합니다.
-     */
-    private String[] getUsernameAndPassword(final String authorization) {
-        final String credentials = authorization.split(" ")[1];
-        final String decodedString = Base64Convertor.decode(credentials);
-
-        final String[] usernameAndPassword = decodedString.split(":");
-
-        if (usernameAndPassword.length != 2) {
-            throw new IllegalArgumentException();
+        try {
+            username = parameterMap.get("username")[0];
+            password = parameterMap.get("password")[0];
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException(e);
         }
 
-        return decodedString.split(":");
+        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
     /**

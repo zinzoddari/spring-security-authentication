@@ -1,6 +1,6 @@
 package nextstep.security.context;
 
-import nextstep.security.domain.Authentication;
+import nextstep.security.authentication.Authentication;
 
 public interface SecurityContext {
 

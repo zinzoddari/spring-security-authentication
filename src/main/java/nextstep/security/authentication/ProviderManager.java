@@ -1,6 +1,8 @@
-package nextstep.security;
+package nextstep.security.authentication;
 
-import nextstep.security.domain.Authentication;
+import nextstep.security.authentication.Authentication;
+import nextstep.security.authentication.AuthenticationManager;
+import nextstep.security.authentication.AuthenticationProvider;
 
 public class ProviderManager implements AuthenticationManager {
 
