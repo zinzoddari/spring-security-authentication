@@ -6,10 +6,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import nextstep.security.context.SecurityContext;
 import nextstep.security.context.SecurityContextHolder;
 import nextstep.security.domain.Authentication;
-import nextstep.security.domain.AuthenticationException;
 import nextstep.security.domain.UsernamePasswordAuthenticationToken;
 
 import java.io.IOException;
@@ -40,7 +40,21 @@ public class LoginFormAuthenticationFilter implements Filter {
         }
 
         final Map<String, String[]> parameterMap = request.getParameterMap();
-        final Authentication authentication = authenticateUser(parameterMap);
+        Authentication authentication = null;
+
+        try {
+            authentication = authenticateUser(parameterMap);
+        } catch (RuntimeException e) {
+            SecurityContextHolder.clearContext();
+            ((HttpServletResponse) response).setStatus(401);
+            return;
+        }
+
+        if (!authentication.isAuthenticated()) {
+            SecurityContextHolder.clearContext();
+            ((HttpServletResponse) response).setStatus(401);
+            return;
+        }
 
         saveAuthentication(authentication);
 
@@ -67,17 +81,19 @@ public class LoginFormAuthenticationFilter implements Filter {
      * 인증이 유효한 Authentication 객체를 반환합니다.
      */
     private Authentication authenticateUser(final Map<String, String[]> parameterMap) {
-        final String username = parameterMap.get("username")[0];
-        final String password = parameterMap.get("password")[0];
+        String username;
+        String password;
 
-        final AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
-        final Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-
-        if (!authentication.isAuthenticated()) {
-            throw new AuthenticationException();
+        try {
+            username = parameterMap.get("username")[0];
+            password = parameterMap.get("password")[0];
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException(e);
         }
 
-        return authentication;
+        final AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
+
+        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
     /**

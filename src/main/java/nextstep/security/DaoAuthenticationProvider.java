@@ -15,7 +15,13 @@ public class DaoAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(final Authentication authentication) throws AuthenticationException {
-        final UserDetails userDetails = userDetailsService.findByUsername((String) authentication.getPrincipal());
+        UserDetails userDetails;
+
+        try {
+            userDetails = userDetailsService.findByUsername((String) authentication.getPrincipal());
+        } catch (AuthenticationException e) {
+            userDetails = null;
+        }
 
         if (userDetails == null) {
             return authentication;

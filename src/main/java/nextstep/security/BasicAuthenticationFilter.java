@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import nextstep.app.util.Base64Convertor;
 import nextstep.security.context.SecurityContext;
 import nextstep.security.context.SecurityContextHolder;
@@ -40,7 +41,20 @@ public class BasicAuthenticationFilter implements Filter {
             return;
         }
 
-        final Authentication authentication = authenticateUser(authorization);
+        Authentication authentication;
+
+        try {
+            authentication = authenticateUser(authorization);
+
+            if (!authentication.isAuthenticated()) {
+               throw new AuthenticationException();
+            }
+        } catch (IllegalArgumentException | AuthenticationException e) {
+            SecurityContextHolder.clearContext();
+            ((HttpServletResponse) response).setStatus(401);
+            return;
+        }
+
         saveAuthentication(authentication);
 
         chain.doFilter(request, response);
@@ -65,17 +79,14 @@ public class BasicAuthenticationFilter implements Filter {
     /**
      * 인증이 유효한 Authentication 객체를 반환합니다.
      */
-    private Authentication authenticateUser(final String authorization) {
+    private Authentication authenticateUser(final String authorization) throws IllegalArgumentException {
         final String[] usernameAndPassword = getUsernameAndPassword(authorization);
+        final String username = usernameAndPassword[0];
+        final String password = usernameAndPassword[1];
 
         final AuthenticationManager authenticationManager = new ProviderManager(new DaoAuthenticationProvider(userDetailsService));
-        final Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usernameAndPassword[0], usernameAndPassword[1]));
 
-        if (!authentication.isAuthenticated()) {
-            throw new AuthenticationException();
-        }
-
-        return authentication;
+        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
     /**
@@ -84,6 +95,12 @@ public class BasicAuthenticationFilter implements Filter {
     private String[] getUsernameAndPassword(final String authorization) {
         final String credentials = authorization.split(" ")[1];
         final String decodedString = Base64Convertor.decode(credentials);
+
+        final String[] usernameAndPassword = decodedString.split(":");
+
+        if (usernameAndPassword.length != 2) {
+            throw new IllegalArgumentException();
+        }
 
         return decodedString.split(":");
     }

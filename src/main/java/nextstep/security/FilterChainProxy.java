@@ -6,10 +6,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-import nextstep.security.context.SecurityContextHolder;
 
 public class FilterChainProxy implements Filter {
 
@@ -44,13 +42,8 @@ public class FilterChainProxy implements Filter {
                 return;
             }
 
-            try {
-                Filter nextFilter = filters.get(currentPosition++);
-                nextFilter.doFilter(request, response, this);
-            } catch (RuntimeException e) {
-                SecurityContextHolder.clearContext();
-                ((HttpServletResponse) response).setStatus(401);
-            }
+            Filter nextFilter = filters.get(currentPosition++);
+            nextFilter.doFilter(request, response, this);
         }
     }
 }
